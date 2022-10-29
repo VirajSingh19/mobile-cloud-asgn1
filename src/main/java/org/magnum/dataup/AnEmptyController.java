@@ -17,7 +17,26 @@
  */
 package org.magnum.dataup;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+
+import org.apache.commons.compress.utils.IOUtils;
+import org.magnum.dataup.model.Video;
+import org.magnum.dataup.model.VideoStatus;
+import org.magnum.dataup.utils.VideoUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 public class AnEmptyController {
@@ -38,5 +57,57 @@ public class AnEmptyController {
                                                                                                                                                                                                                                                                         
 	 * 
 	 */
-	
+
+	@GetMapping("/")
+	@ResponseBody
+	String start() {
+		return "Hello";
+	}
+
+	@PostMapping("/video")
+	@ResponseBody
+	Video addVideo(
+			@RequestBody Video video) {
+		return VideoUtil.addVideo(video);
+	}
+
+	@GetMapping("/video")
+	@ResponseBody
+	Collection<Video> getVideos() {
+		return VideoUtil.getVideos();
+	}
+
+	@PostMapping("/video/{id}/data")
+	@ResponseBody 
+	VideoStatus addVideoData(@PathVariable("id") Long id,
+			@RequestParam("data") MultipartFile videoData) throws IOException {
+		Video video = VideoUtil.getById(id);
+		try {
+			VideoFileManager videoFileManager = VideoFileManager.get();
+			InputStream in = videoData.getInputStream();
+			videoFileManager.saveVideoData(video, in);
+			return new VideoStatus(VideoStatus.VideoState.READY);
+		} catch (Exception e) {
+			throw new ResponseStatusException(
+					HttpStatus.NOT_FOUND, "Video Not Found", e);
+		}
+	}
+
+	@GetMapping("/video/{id}/data")
+	@ResponseBody byte[] getVideoDataById(@PathVariable("id") Long id) throws IOException {
+		
+		Video video = VideoUtil.getById(id);
+		VideoFileManager videoFileManager = VideoFileManager.get();
+		
+		try {
+			videoFileManager.hasVideoData(video);
+			File initialFile = new File("videos/video" + id +".mpg");
+			InputStream targetStream = new FileInputStream(initialFile);
+			return IOUtils.toByteArray(targetStream);
+		} catch (Exception e) {
+			throw new ResponseStatusException(
+					HttpStatus.NOT_FOUND, "Video Not Found", e);
+		}
+	}
+
 }

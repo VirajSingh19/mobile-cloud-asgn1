@@ -57,8 +57,11 @@ public class Video {
 
 	public interface VideoBuilder extends Builder<Video> {
 		public VideoBuilder withTitle(String title);
+
 		public VideoBuilder withDuration(long duration);
+
 		public VideoBuilder withSubject(String subject);
+
 		public VideoBuilder withContentType(String contentType);
 	}
 
@@ -138,7 +141,9 @@ public class Video {
 	@Override
 	public boolean equals(Object obj) {
 		return (obj instanceof Video)
-				&& Objects.equals(getTitle(), ((Video) obj).getTitle())
+				&& Objects.equals(
+						getTitle(),
+						((Video) obj).getTitle())
 				&& getDuration() == ((Video) obj).getDuration();
 	}
 
